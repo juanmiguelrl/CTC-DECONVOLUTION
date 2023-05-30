@@ -1,0 +1,104 @@
+{
+    "generate" : {
+        "nodes" : [3,5],
+        "mutations" : 50,
+        "mutation_ratio" : 0.1,
+        "initial_mutation_ratio" : [0.1,0.5],
+        "base" : 1,
+        "min_population_multiplier_range" : 1,
+        "max_population_multiplier_range" : 1
+    },
+    "set_seed" : true,
+    "seed" : 1234,
+    "out_file" : true,
+    "out_dir" : "out",
+
+    "algorithm" : {
+        "data_file" : "out\\tree.json",
+        "out_file" : "cluster.json",
+        "frequency_list_name" : "frequency_list_noisy_no_zeros",
+        "KDE" : {
+            "bandwidth" : 0.02,
+            "search_hyperparameters" : false
+        }
+    },
+
+    "VCF" : {
+        "vcf_file" : "vcf\\example.vcf",
+        "apply_functions" : true,
+        "functions" : {
+            "lambda n,df: df.head(n[0])": {"n":[20],"axis":0}
+        },
+        "total" : 10,
+        "out_file" : "vcf.json"
+
+    },
+
+    "build_tree" : {
+        "out_file" : "lineage.json",
+        "in_file" : "out\\tree.json",
+        "frequency_list_name" : "frequency_list"
+    },
+
+    "tree_to_cluster" : {
+        "out_file" : "ground_truth.json",
+        "in_file" : "out\\tree.json",
+        "frequency_list_name" : "frequency_list_noisy_no_zeros",
+        "remove_zeros_from_clusters_freq" : true
+    },
+
+    "metrics" : {
+        "out_file" : "performance_metrics.json",
+        "in_file" : "out\\cluster.json",
+        "ground_truth" : "out\\ground_truth.json",
+        "ground_truth_tree" : "out\\tree.json",
+        "remove_root_0" : true
+    },
+
+    "build_cluster" : {
+        "out_file" : "cluster_lineages.json",
+        "in_file" : "out\\cluster.json",
+        "remove_root_0" : true
+    },
+
+    "tree_to_newick" : {
+        "out_file" : "tree.nwk",
+        "in_file" : "out\\cluster_lineages.json",
+        "frequency_list_name" : "frequency_list",
+        "remove_root_0" : true
+    },
+
+    "benchmark" : {
+        "set_seed" : true,
+        "seed" : 1234,
+        "out_file" : true,
+        "out_dir" : "10benchmark",
+        "update_csv_during_run" : true,
+        "generate_list" :
+            [
+                {
+                    "params" : {
+                        "nodes" : [3,5],
+                        "mutations" : 50,
+                        "mutation_ratio" : 0.1,
+                        "initial_mutation_ratio" : [0.1,0.5],
+                        "base" : 1,
+                        "min_population_multiplier_range" : 1,
+                        "max_population_multiplier_range" : 1
+                    },
+                    "repeat" : 1
+                }
+            ],
+        "KDE" : [
+            {
+                "bandwidth" : 0.02,
+                "search_hyperparameters" : false
+            }
+        ]
+    },
+    "graphs" : {
+        "in_file" : ["benchmark_7\\benchmark_results.csv"],
+        "out_dir" : "benchmark\\graphs",
+        "remove_same_seed" : false
+    }
+}
