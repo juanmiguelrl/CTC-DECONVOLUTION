@@ -16,7 +16,7 @@ if __name__ == '__main__':
     parser.add_argument("--metrics", help="calculate multiple metrics for benchmarking of the clusters calculated comparing them with a ground truth", required=False, default=False, action="store_true")
     parser.add_argument("--build_cluster", help="builds a genetic tree from the frequencies and mutations given from a dictionary of different clusterizations", required=False, default=False, action="store_true")
     parser.add_argument("--tree_to_newick", help="pass the trees given to newick format", required=False, default=False, action="store_true")
-    parser.add_argument("--n","--nni", help="to use nni or not during the training", required=False, default=False, action="store_true")
+    #parser.add_argument("--n","--nni", help="to use nni or not during the training", required=False, default=False, action="store_true")
     parser.add_argument("--benchmark", help="benchmark the different algorithms with the different parameters provided", required=False, default=False, action="store_true")
     parser.add_argument("--graphs", help="generate graphs from the results of the benchmark", required=False, default=False, action="store_true")
 
@@ -32,15 +32,16 @@ if __name__ == '__main__':
 
     if args.generate:
         gen_params = PARAMS["generate"]
-        #if the parameters are lists, it transforms them into tuples
-        tools.to_tuple(gen_params)
-        #if the parameters are tuples, it generates a random number between the two values
-        #else it keeps the value
-        gen_params = tools.check_tuple(gen_params)
-        print("The parameters are:")
-        print(gen_params)
-        print("Generating the cell lineage...")
-        resultado = dict(zip(['main_tree', 'frequency_list', 'frequency_list_noisy','frequency_list_no_zeros','frequency_list_noisy_no_zeros', 'cluster_list', 'total'], generator.generate_tree(**gen_params)))
+        if gen_params["fixed"]:  
+            #if the parameters are lists, it transforms them into tuples  
+            tools.to_tuple(gen_params["fixed_params"])
+        else:
+            #if the parameters are lists, it transforms them into tuples
+            tools.to_tuple(gen_params["random_params"])
+            #if the parameters are tuples, it generates a random number between the two values
+            #else it keeps the value
+            gen_params = tools.check_tuple(gen_params["random_params"])
+        resultado = generator.run_generator(gen_params)
         print("The cell lineage has been generated")
         print("The tree is:")
         print(resultado["main_tree"])
@@ -56,7 +57,7 @@ if __name__ == '__main__':
         #t2 = resultado["main_tree"]
         resultado = tools.adapt_output(resultado)
         if PARAMS["out_file"]:
-            tools.store_dict(resultado, os.path.join(PARAMS["out_dir"],"tree.json"))
+            tools.store_dict(resultado, os.path.join(PARAMS["out_dir"],gen_params["out_file"]))
         else:
             print(resultado)
         #t = tools.create_tree(resultado["main_tree"])
@@ -66,12 +67,16 @@ if __name__ == '__main__':
     if args.vcf:
         data = vcf.read_vcf(PARAMS["VCF"]["vcf_file"])
         print(data.head())
-        data = vcf.info_to_columns(data)
+        if not PARAMS["VCF"].get("frequency_column"):
+            data = vcf.info_to_columns(data)
+        if PARAMS["VCF"].get("separate_column"):
+            for i in range (len(PARAMS["VCF"]["separate_column"])):
+                data = vcf.separate_column(data,PARAMS["VCF"]["separate_column"][i],PARAMS["VCF"]["separator"][i])
         #apply functions to the dataframe
         if PARAMS["VCF"]["apply_functions"]:
             data = vcf.apply_functions(data,PARAMS["VCF"]["functions"])
         print(data.head())
-        store = vcf.vcf_frequencies_to_dict(data,PARAMS["VCF"]["total"])
+        store = vcf.vcf_frequencies_to_dict(data,PARAMS["VCF"]["total"],PARAMS["VCF"].get("frequency_column"))
         tools.store_dict(store, os.path.join(PARAMS["out_dir"],PARAMS["VCF"]["out_file"]))
 
 
@@ -114,10 +119,9 @@ if __name__ == '__main__':
         ground_truth = tools.read_json(PARAMS["metrics"]["ground_truth"])
 
         dict_tree = tools.read_json(PARAMS["tree_to_cluster"]["in_file"])["main_tree"]
-        ground_truth_tree = tools.create_tree(dict_tree)
-        remove_root_0 = PARAMS["metrics"]["remove_root_0"]
+        #ground_truth_tree = tools.create_tree(dict_tree)
 
-        metrics = metrics.calculate_metrics(input,ground_truth,ground_truth_tree,remove_root_0)
+        metrics = metrics.calculate_metrics(input,ground_truth)
         #print(metrics)
         metrics = tools.adapt_output(metrics)
         tools.store_dict(metrics, os.path.join(PARAMS["out_dir"],PARAMS["metrics"]["out_file"]))

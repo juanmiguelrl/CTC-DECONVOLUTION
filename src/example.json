@@ -1,12 +1,23 @@
 {
     "generate" : {
-        "nodes" : [3,5],
-        "mutations" : 50,
-        "mutation_ratio" : 0.1,
-        "initial_mutation_ratio" : [0.1,0.5],
-        "base" : 1,
+        "nodes" : [3,15],
+        "mutations" : [150,300],
+        "mutation_ratio" : [0.2,0.4],
+        "initial_mutation_ratio" : [0.2,0.6],
+        "base" : [1,6],
+        "min_minimum_mutation_range" : 1,
+        "max_minimum_mutation_range" : 3,
         "min_population_multiplier_range" : 1,
-        "max_population_multiplier_range" : 1
+        "max_population_multiplier_range" : 1,
+        "out_file" : "tree.json",
+        "fixed" : true,
+        "fixed_params" : {
+            "clone_number" : [1,5],
+            "cell_number" : [2,20],
+            "mutation_number" : 50,
+            "sequencing_depth" : 100,
+            "variance" : 0.001
+        }
     },
     "set_seed" : true,
     "seed" : 1234,
@@ -16,11 +27,12 @@
     "algorithm" : {
         "data_file" : "out\\tree.json",
         "out_file" : "cluster.json",
-        "frequency_list_name" : "frequency_list_noisy_no_zeros",
+        "frequency_list_name" : "frequency_list",
         "KDE" : {
             "bandwidth" : 0.02,
             "search_hyperparameters" : false
-        }
+        },
+        "chromosone_n_sets" : 2
     },
 
     "VCF" : {
@@ -50,54 +62,65 @@
     "metrics" : {
         "out_file" : "performance_metrics.json",
         "in_file" : "out\\cluster.json",
-        "ground_truth" : "out\\ground_truth.json",
-        "ground_truth_tree" : "out\\tree.json",
-        "remove_root_0" : true
+        "ground_truth" : "out\\ground_truth.json"
     },
 
     "build_cluster" : {
         "out_file" : "cluster_lineages.json",
-        "in_file" : "out\\cluster.json",
-        "remove_root_0" : true
+        "in_file" : "out\\cluster.json"
     },
 
     "tree_to_newick" : {
         "out_file" : "tree.nwk",
         "in_file" : "out\\cluster_lineages.json",
-        "frequency_list_name" : "frequency_list",
         "remove_root_0" : true
     },
 
     "benchmark" : {
         "set_seed" : true,
         "seed" : 1234,
-        "out_file" : true,
-        "out_dir" : "10benchmark",
+        "out_figures" : false,
+        "store_simulations_and_clustering" : false,
+        "out_dir" : "benchmark",
         "update_csv_during_run" : true,
+        "update_each_n_runs" : 50,
         "generate_list" :
             [
                 {
                     "params" : {
-                        "nodes" : [3,5],
-                        "mutations" : 50,
-                        "mutation_ratio" : 0.1,
-                        "initial_mutation_ratio" : [0.1,0.5],
-                        "base" : 1,
+                        "nodes" : [3,15],
+                        "mutations" : [150,300],
+                        "mutation_ratio" : [0.2,0.4],
+                        "initial_mutation_ratio" : [0.2,0.6],
+                        "base" : [1,6],
+                        "min_minimum_mutation_range" : 1,
+                        "max_minimum_mutation_range" : 3,
                         "min_population_multiplier_range" : 1,
-                        "max_population_multiplier_range" : 1
+                        "max_population_multiplier_range" : 1,
+                        "out_file" : "tree.json",
+                        "fixed" : true,
+                        "fixed_params" : {
+                            "clone_number" : [1,5],
+                            "cell_number" : [2,20],
+                            "mutation_number" : 50,
+                            "sequencing_depth" : 100,
+                            "variance" : 0.001
+                        }
                     },
-                    "repeat" : 1
+                    "repeat" : 100
                 }
             ],
+            "frequency_lists" : ["frequency_list","frequency_list_noisy"], 
         "KDE" : [
             {
                 "bandwidth" : 0.02,
                 "search_hyperparameters" : false
             }
-        ]
+        ],
+        "chromosone_n_sets" : 2
     },
     "graphs" : {
-        "in_file" : ["benchmark_7\\benchmark_results.csv"],
+        "in_file" : ["benchmark\\benchmark_results.csv"],
         "out_dir" : "benchmark\\graphs",
         "remove_same_seed" : false
     }

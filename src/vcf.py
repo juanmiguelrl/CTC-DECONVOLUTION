@@ -20,6 +20,12 @@ def info_to_columns(vcf):
     new_df = pd.DataFrame([dict(kv.split("=") for kv in s.split(";")) for s in vcf['INFO']])
     return pd.concat([vcf.drop('INFO', axis=1), new_df], axis=1)
 
+def separate_column(df,column_name,separator):
+    new_df = df[column_name].str.split(separator,expand=True)
+    #add the name of the column to each column
+    new_df = new_df.add_prefix(column_name+"_")
+    return pd.concat([df.drop(column_name, axis=1), new_df], axis=1)
+     
 
 def apply_functions(df, func_dict):
     for key in func_dict:
@@ -30,8 +36,11 @@ def apply_functions(df, func_dict):
 #stores the vcf dataframe frequencies (AF) into a dictionary
 #having as key frequency_list
 #and having as key for total the number of cells n
-def vcf_frequencies_to_dict(vcf,n):
-    return {"frequency_list": [float(i) for i in vcf["AF"].tolist()],"total":n}
+def vcf_frequencies_to_dict(vcf,n,alt_column):
+    if not alt_column:
+        vcf = vcf[vcf['AF'].str.contains(',') == False]
+        alt_column = "AF"
+    return {"frequency_list": [float(i) for i in vcf[alt_column].tolist()],"total":n}
     #return {"frequency_list":vcf["AF"].tolist(),"total":n}
     
 

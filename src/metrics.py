@@ -9,28 +9,29 @@ def clone_number_error(inferred,ground_truth):
 def v_measure_metric(inferred,ground_truth,total):
     #v measure
     #print(ground_truth)
-    ground_truth_labels = label_list(ground_truth,total)
+    ground_truth_labels = label_list(ground_truth,total = total)
     #print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-    #print(inferred)
-    inferred_labels = label_list(inferred,total)
+    print(ground_truth_labels)
+    print(inferred)
+    inferred_labels = label_list(inferred,ground_truth_labels)
     #print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-    #print(inferred_labels)
+    print(inferred_labels)
     v_measure = v_measure_score(ground_truth_labels, inferred_labels)
     #print("v_measure: "+str(v_measure))
     return v_measure
 
 def adjusted_rand_index_metric(inferred,ground_truth,total):
     #adjusted rand index
-    ground_truth_labels = label_list(ground_truth,total)
-    inferred_labels = label_list(inferred,total)
+    ground_truth_labels = label_list(ground_truth,total = total)
+    inferred_labels = label_list(inferred,ground_truth_labels)
     adjusted_rand_index = adjusted_rand_score(ground_truth_labels, inferred_labels)
     #print("adjusted_rand_index: "+str(adjusted_rand_index))
     return adjusted_rand_index
 
 def pair_confusion_matrix_metric(inferred,ground_truth,total):
     #adjusted rand index
-    ground_truth_labels = label_list(ground_truth,total)
-    inferred_labels = label_list(inferred,total)
+    ground_truth_labels = label_list(ground_truth,total = total)
+    inferred_labels = label_list(inferred,ground_truth_labels)
     pair_confusion = pair_confusion_matrix(ground_truth_labels, inferred_labels)
     #print("adjusted_rand_index: "+str(adjusted_rand_index))
     return pair_confusion
@@ -41,6 +42,22 @@ def label_list(dictionary,size):
     for k, v in dictionary.items():
         for i in v:
             label_list[i-1] = k
+    return label_list
+
+def label_list(dictionary,list=[],total=None):
+    if total is None:
+        size = sum(len(v) for v in dictionary.values())
+    else:
+        size = total
+    label_list = ["0"]*size
+    print(size)
+    for k, v in dictionary.items():
+        for i in v:
+            label_list[i] = k
+    if (list is not []) & (len(label_list) != len(list)):
+        for i, x in enumerate(list):
+            if x == '0':
+                label_list.insert(i, 0)
     return label_list
 
 
@@ -68,17 +85,17 @@ def tree_distance(tree,g_newick):
 
 
 
-def calculate_metrics(inferred,ground_truth,ground_truth_tree = None,remove_root_0=True):
+def calculate_metrics(inferred,ground_truth):
     #get the total number of mutations in the ground truth
     total = ground_truth["total"]
     #an adapted ground truth is created to be able to compare the results of the algorithms
     adapted_ground_truth = ground_truth.copy()
     for key in adapted_ground_truth["cluster_list"].keys():
-        print("***************")
-        print(adapted_ground_truth["cluster_list"][key])
+        #print("Adapted ground truth before and after***************")
+        #print(adapted_ground_truth["cluster_list"][key])
         adapted_ground_truth["cluster_list"][key] = adapted_ground_truth["cluster_list"][key][1]
-        print(adapted_ground_truth["cluster_list"][key])
-        print("***************")
+        #print(adapted_ground_truth["cluster_list"][key])
+        #print("****************************************************")
     inferred_alg1 = inferred.get("Algorithm_1")
     inferred_alg2 = inferred.get("Algorithm_2_kmeans")
     if inferred_alg2 is not None:
@@ -100,6 +117,8 @@ def calculate_metrics(inferred,ground_truth,ground_truth_tree = None,remove_root
         #print("*******************************")
         #print(inferred_alg2_dict)
         #print("*******************************")
+    else:
+        inferred_alg2_dict = {}
     
     inferred_alg3 = inferred.get("Algorithm_3")
     inferred_dict = {"Algorithm_1":inferred_alg1,"Algorithm_3":inferred_alg3}
@@ -134,6 +153,10 @@ def calculate_metrics(inferred,ground_truth,ground_truth_tree = None,remove_root
         #    benchmark[key].setdefault("genotype_error",v_measure_metric(inferred_dict[key],adapted_ground_truth["cluster_list"],total))
         #    benchmark[key].setdefault("genotype_error_different_frequencies",v_measure_metric(inferred_dict[key],adapted_ground_truth["frequency_clusters"],total))
         #else:
+        #print(inferred_dict[key])
+        #print(ground_truth["cluster_list"])
+        #print(total)
+        print("***************")
         benchmark[key].setdefault("genotype_error",v_measure_metric(inferred_dict[key],ground_truth["cluster_list"],total))
         benchmark[key].setdefault("genotype_error_different_frequencies",v_measure_metric(inferred_dict[key],ground_truth["frequency_clusters"],total))
         #adjusted rand index

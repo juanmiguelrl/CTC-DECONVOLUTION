@@ -30,7 +30,7 @@ from scipy.signal import argrelextrema
 """
 Algorithm 1: Decide a number of clusters from the total number of cells
 """
-def make_clusters(freq_list,total):
+def make_clusters(freq_list,total,n=1):
     """
     total: total number of cells
     combined_list: list of the frequency of each mutation in each cluster
@@ -41,7 +41,7 @@ def make_clusters(freq_list,total):
     clusters = {}
     for i in range(total):
         #a dictionary is generated with an element that will be i/total
-        clusters.update({(i+1)/total:[]})
+        clusters.update({((i+1)/total)/n:[]})
     
     count = 0
     for i in freq_list:
@@ -88,14 +88,14 @@ def elbow_method(frecuencias,total):
     max_clusters = total
 
     # Try different values of k (number of clusters) and store the values of the sums of the squares within each cluster
-    for k in range(1, max_clusters):
+    for k in range(1, max_clusters+1):
         kmeans = KMeans(n_clusters=k)
         kmeans.fit(X)
         sum_of_squares.append(kmeans.inertia_)
 
     # Plot an elbow graph to determine the optimal number of clusters
     fig, ax = plt.subplots()
-    ax.plot(range(1, max_clusters), sum_of_squares, 'bx-')
+    ax.plot(range(1, max_clusters+1), sum_of_squares, 'bx-')
     ax.set_xlabel('Number of clusters (k)')
     ax.set_ylabel('Sum of squared distances to the cluster center')
     ax.set_title('Elbow method to determine the optimal K')
@@ -118,7 +118,7 @@ def cluster_kmeans(frequencies, max_num_clusters):
     #creates a dictionary to store the clusters
     clusters = dict()
     # Try different values of k (number of clusters) and store the values of the sums of the squares within each cluster
-    for k in range(1, max_num_clusters):
+    for k in range(1, max_num_clusters+1):
         kmeans = KMeans(n_clusters=k)
         kmeans.fit(X)
         labels = kmeans.labels_
@@ -137,6 +137,14 @@ def cluster_kmeans(frequencies, max_num_clusters):
         l = []
         for i in range(len(centroids)):
             l.append({str(centroids[i][0]):[index for index, element in enumerate(labels) if element == i]})
+        aux = []
+        for element in l:
+            for key, value in element.items():
+                if value == []:
+                    aux.append(element)
+                    print("removed repeated empty centroid")
+        for element in aux:
+            l.remove(element)
         clusters.update({str(k):{"k":k, "centroids":l, "inertia":kmeans.inertia_}})
         #clusters.update({str(k):{"k":k,"labels":labels, "centroids":centroids, "inertia":kmeans.inertia_}})
 
@@ -213,13 +221,13 @@ def kde_cluster(freq_list,bandwidth=0.02,search_hyperparameters=False):
         clusters.update({i:[]})
     clusters.update({1:[]})
 
-    #the frequencies are added to the clusters, skipping the ones with frequency 0
+    #the frequencies are added to the clusters
     for i in range(len(freq_list)):
-        if freq_list[i] != 0:
-            for j in clusters.keys():
-                if freq_list[i] <= j:
-                    clusters[j].append(i)
-                    break
+        #if freq_list[i] != 0:
+        for j in clusters.keys():
+            if freq_list[i] <= j:
+                clusters[j].append(i)
+                break
 
     return clusters, fig
 
@@ -239,7 +247,10 @@ def run_algorithm(PARAMS,algorithm_number):
         if 1 in algorithm_number:
             print("Running the first algorithm...")
             #cluster the mutations
-            clusters = make_clusters(CELL_DATA[ALG_PARAMS["frequency_list_name"]],CELL_DATA["total"])
+            if ALG_PARAMS.get("chromosone_n_sets"):
+                clusters = make_clusters(CELL_DATA[ALG_PARAMS["frequency_list_name"]],CELL_DATA["total"],ALG_PARAMS["chromosone_n_sets"])    
+            else:
+                clusters = make_clusters(CELL_DATA[ALG_PARAMS["frequency_list_name"]],CELL_DATA["total"])
             #store the clusters in the dictionary
             cluster.update({"Algorithm_1":clusters})
         
